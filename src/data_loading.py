@@ -17,6 +17,14 @@ def load_anomaly_windows(filename: str) -> list:
     key = f"realAWSCloudwatch/{filename}"
     return [(pd.Timestamp(s), pd.Timestamp(e)) for s, e in all_windows.get(key, [])]
 
+def clean_series(df: pd.DataFrame) -> pd.DataFrame:
+    """Reindex on a complete 5-min grid and linearly interpolate missing points."""
+    expected_index = pd.date_range(start=df.index.min(), end=df.index.max(), freq="5min")
+    df_clean = df.reindex(expected_index)
+    df_clean.index.name = "timestamp"
+    df_clean["value"] = df_clean["value"].interpolate(method="linear")
+    return df_clean
+
 
 if __name__ == "__main__":
     fname = "ec2_cpu_utilization_825cc2.csv"
